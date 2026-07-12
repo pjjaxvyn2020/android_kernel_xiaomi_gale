@@ -43,6 +43,9 @@ jobs:
       
       - name: Setup KernelSU-Next & SuSFS
         run: |
+          # Remove the pre-existing drivers/kernel folder to ensure a clean clone
+          rm -rf ./drivers/kernel
+
           # 1. Clone KernelSU-Next Legacy branch into the drivers/kernel folder
           git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy ./drivers/kernel
 
