@@ -41,12 +41,30 @@ jobs:
           echo "$HOME/.bin" >> $GITHUB_PATH
           echo "${{ github.workspace }}/proton-clang/bin" >> $GITHUB_PATH
       
-      - name: Setup KernelSU-Next
+      - name: Setup KernelSU-Next & SuSFS
         run: |
-          # Integrate Kernel-SU Next
+          # 1. Clone KernelSU-Next Legacy branch into the drivers/kernel folder
+          git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy ./drivers/kernel
 
+          # 2. Clone the SuSFS repository to get the required driver files
+          git clone https://gitlab.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
+
+          # 3. Integrate Kernel-SU Next into build config files
           sed -i $'232i source "drivers/kernel/Kconfig"\n' ./drivers/Kconfig
           echo 'obj-$(CONFIG_KSU) += kernel/' >> "./drivers/Makefile"
+
+          # 4. Copy the missing SuSFS driver files into your kernel tree
+          cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/fs/susfs.c" ./fs/
+          cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/include/linux/susfs.h" ./include/linux/
+
+          # 5. Automatically force the correct Manual Hook & SuSFS config flags
+          DEFCONFIG_PATH="./arch/arm64/configs/gale_defconfig"
+          echo "CONFIG_KSU=y" >> $DEFCONFIG_PATH
+          echo "CONFIG_KSU_SUSFS=y" >> $DEFCONFIG_PATH
+          echo "CONFIG_KSU_MANUAL_HOOK=y" >> $DEFCONFIG_PATH
+          echo "# CONFIG_KSU_KPROBES_HOOK is not set" >> $DEFCONFIG_PATH
+          echo "CONFIG_SUSFS=y" >> $DEFCONFIG_PATH
+          echo "CONFIG_SUSFS_SUS_SU=y" >> $DEFCONFIG_PATH
 
           echo "Never gonna give you up never gonna let you down."
           
