@@ -43,24 +43,27 @@ jobs:
       
       - name: Setup KernelSU-Next & SuSFS
         run: |
-          # Force remove the directory completely using the workspace absolute path
-          rm -rf "${{ github.workspace }}/drivers/kernel"
+          # 1. Clone KernelSU-Next Legacy branch into a separate temporary directory
+          git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy "${{ github.workspace }}/ksu_next_tmp"
 
-          # 1. Clone KernelSU-Next Legacy branch directly into drivers/kernel
-          git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy "${{ github.workspace }}/drivers/kernel"
+          # 2. Force create the target directory just in case
+          mkdir -p "./drivers/kernel"
 
-          # 2. Clone the SuSFS repository to get the required driver files
+          # 3. Copy all files from the temporary folder straight into drivers/kernel
+          cp -r "${{ github.workspace }}/ksu_next_tmp/"* "./drivers/kernel/"
+
+          # 4. Clone the SuSFS repository to get the required driver files
           git clone https://gitlab.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
 
-          # 3. Integrate Kernel-SU Next into build config files
+          # 5. Integrate Kernel-SU Next into build config files
           sed -i $'232i source "drivers/kernel/Kconfig"\n' ./drivers/Kconfig
           echo 'obj-$(CONFIG_KSU) += kernel/' >> "./drivers/Makefile"
 
-          # 4. Copy the missing SuSFS driver files into your kernel tree
+          # 6. Copy the missing SuSFS driver files into your kernel tree
           cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/fs/susfs.c" ./fs/
           cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/include/linux/susfs.h" ./include/linux/
 
-          # 5. Automatically force the correct Manual Hook & SuSFS config flags
+          # 7. Automatically force the correct Manual Hook & SuSFS config flags
           DEFCONFIG_PATH="./arch/arm64/configs/gale_defconfig"
           echo "CONFIG_KSU=y" >> $DEFCONFIG_PATH
           echo "CONFIG_KSU_SUSFS=y" >> $DEFCONFIG_PATH
