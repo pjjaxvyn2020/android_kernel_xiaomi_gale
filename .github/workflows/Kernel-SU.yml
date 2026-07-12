@@ -43,16 +43,18 @@ jobs:
       
       - name: Setup KernelSU-Next & SuSFS
         run: |
-          # 1. Clone KernelSU-Next Legacy branch into a separate temporary directory
+          # 1. Clear out any previous temporary folders or clones from previous failed runs
+          rm -rf "${{ github.workspace }}/ksu_next_tmp"
+          rm -rf "${{ github.workspace }}/susfs4ksu"
+
+          # 2. Clone KernelSU-Next Legacy branch into a clean temporary directory
           git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy "${{ github.workspace }}/ksu_next_tmp"
 
-          # 2. Force create the target directory just in case
+          # 3. Force create the target directory and copy the files safely
           mkdir -p "./drivers/kernel"
-
-          # 3. Copy all files from the temporary folder straight into drivers/kernel
           cp -r "${{ github.workspace }}/ksu_next_tmp/"* "./drivers/kernel/"
 
-          # 4. Clone the SuSFS repository to get the required driver files
+          # 4. Clone the SuSFS repository cleanly now that its old path is wiped
           git clone https://gitlab.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
 
           # 5. Integrate Kernel-SU Next into build config files
