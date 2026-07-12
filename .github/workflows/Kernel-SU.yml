@@ -47,7 +47,7 @@ jobs:
           rm -rf "${{ github.workspace }}/ksu_next_tmp"
           rm -rf "${{ github.workspace }}/susfs4ksu"
 
-          # 2. Force-delete the existing drivers/kernel target completely (wipes files, folders, or symlinks)
+          # 2. Force-delete the existing drivers/kernel target completely
           rm -rf "./drivers/kernel"
 
           # 3. Clone KernelSU-Next Legacy branch into a clean temporary directory
@@ -59,16 +59,16 @@ jobs:
           # 5. Copy all files from the temporary folder straight into drivers/kernel
           cp -r "${{ github.workspace }}/ksu_next_tmp/"* "./drivers/kernel/"
 
-          # 6. Clone the SuSFS repository to get the required driver files
-          git clone https://github.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
+          # 6. Clone the SuSFS repository from a verified public GitHub mirror
+          git clone https://github.com/ShirkNeko/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
 
           # 7. Integrate Kernel-SU Next into build config files
           sed -i $'232i source "drivers/kernel/Kconfig"\n' ./drivers/Kconfig
           echo 'obj-$(CONFIG_KSU) += kernel/' >> "./drivers/Makefile"
 
-          # 8. Copy the missing SuSFS driver files into your kernel tree
-          cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/fs/susfs.c" ./fs/
-          cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/include/linux/susfs.h" ./include/linux/
+          # 8. Copy the missing SuSFS driver files into your kernel tree from the new mirror layout
+          cp "${{ github.workspace }}/susfs4ksu/kernel_patches/fs/susfs.c" ./fs/
+          cp "${{ github.workspace }}/susfs4ksu/kernel_patches/include/linux/susfs.h" ./include/linux/
 
           # 9. Automatically force the correct Manual Hook & SuSFS config flags
           DEFCONFIG_PATH="./arch/arm64/configs/gale_defconfig"
