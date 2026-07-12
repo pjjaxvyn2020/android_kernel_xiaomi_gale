@@ -46,35 +46,30 @@ jobs:
           # 1. Clear out any previous temporary folders or clones completely
           rm -rf "${{ github.workspace }}/ksu_next_tmp"
           rm -rf "${{ github.workspace }}/susfs4ksu"
-
-          # 2. Force-delete the existing drivers/kernel target completely
           rm -rf "./drivers/kernel"
 
-          # 3. Clone KernelSU-Next Legacy branch into a clean temporary directory
+          # 2. Clone KernelSU-Next Legacy branch into a temporary directory
           git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy "${{ github.workspace }}/ksu_next_tmp"
 
-          # 4. Create a fresh, clean target directory structure
-          mkdir -p "./drivers/kernel"
+          # 3. Copy ONLY the inner 'kernel' subdirectory so Kconfig aligns perfectly at drivers/kernel/Kconfig
+          cp -r "${{ github.workspace }}/ksu_next_tmp/kernel" "./drivers/kernel"
 
-          # 5. Copy all files from the temporary folder straight into drivers/kernel
-          cp -r "${{ github.workspace }}/ksu_next_tmp/"* "./drivers/kernel/"
-
-          # 6. Clone the SuSFS repository from a verified public GitHub mirror
+          # 4. Clone the SuSFS repository from the verified public mirror
           git clone https://github.com/ShirkNeko/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
 
-          # 7. Integrate Kernel-SU Next into build config files
+          # 5. Integrate Kernel-SU Next into build config files
           sed -i $'232i source "drivers/kernel/Kconfig"\n' ./drivers/Kconfig
           echo 'obj-$(CONFIG_KSU) += kernel/' >> "./drivers/Makefile"
 
-          # 8. Copy the missing SuSFS driver files into your kernel tree
+          # 6. Copy the missing SuSFS driver files into your kernel tree from the mirror layout
           cp "${{ github.workspace }}/susfs4ksu/kernel_patches/fs/susfs.c" ./fs/
           cp "${{ github.workspace }}/susfs4ksu/kernel_patches/include/linux/susfs.h" ./include/linux/
 
-          # 9. WIRE UP SUSFS: Safely append to Kconfig using printf to protect YAML indentation
+          # 7. WIRE UP SUSFS: Safely append to Kconfig & Makefile using printf to protect YAML indentation
           echo 'obj-$(CONFIG_SUSFS) += susfs.o' >> ./fs/Makefile
           printf "\nconfig SUSFS\n\tbool \"SuSFS support\"\n\tdefault y\n" >> ./fs/Kconfig
 
-          # 10. Automatically force the correct Manual Hook & SuSFS config flags
+          # 8. Automatically force the correct Manual Hook & SuSFS config flags
           DEFCONFIG_PATH="./arch/arm64/configs/gale_defconfig"
           echo "CONFIG_KSU=y" >> $DEFCONFIG_PATH
           echo "CONFIG_KSU_SUSFS=y" >> $DEFCONFIG_PATH
@@ -83,10 +78,13 @@ jobs:
           echo "CONFIG_SUSFS=y" >> $DEFCONFIG_PATH
           echo "CONFIG_SUSFS_SUS_SU=y" >> $DEFCONFIG_PATH
 
-          # 11. FIX LOG MASKING: Forces the action to stop instantly if the compiler throws an error
+          # 9. FIX LOG MASKING: Forces the action to stop instantly if the compiler throws an error
           if [ -f "./build_kernel.sh" ]; then
             sed -i '2i set -o pipefail' ./build_kernel.sh
           fi
+
+          # 10. Clean up the temporary workspace folder
+          rm -rf "${{ github.workspace }}/ksu_next_tmp"
 
           echo "Never gonna give you up never gonna let you down."
           
