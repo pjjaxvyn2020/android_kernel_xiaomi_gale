@@ -60,7 +60,7 @@ jobs:
           cp -r "${{ github.workspace }}/ksu_next_tmp/"* "./drivers/kernel/"
 
           # 6. Clone the SuSFS repository to get the required driver files
-          git clone https://gitlab.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
+          git clone https://github.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
 
           # 7. Integrate Kernel-SU Next into build config files
           sed -i $'232i source "drivers/kernel/Kconfig"\n' ./drivers/Kconfig
