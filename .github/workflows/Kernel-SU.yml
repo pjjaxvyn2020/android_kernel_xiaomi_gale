@@ -43,29 +43,34 @@ jobs:
       
       - name: Setup KernelSU-Next & SuSFS
         run: |
-          # 1. Clear out any previous temporary folders or clones from previous failed runs
+          # 1. Clear out any previous temporary folders or clones completely
           rm -rf "${{ github.workspace }}/ksu_next_tmp"
           rm -rf "${{ github.workspace }}/susfs4ksu"
 
-          # 2. Clone KernelSU-Next Legacy branch into a clean temporary directory
+          # 2. Force-delete the existing drivers/kernel target completely (wipes files, folders, or symlinks)
+          rm -rf "./drivers/kernel"
+
+          # 3. Clone KernelSU-Next Legacy branch into a clean temporary directory
           git clone https://github.com/KernelSU-Next/KernelSU-Next -b legacy "${{ github.workspace }}/ksu_next_tmp"
 
-          # 3. Force create the target directory and copy the files safely
+          # 4. Create a fresh, clean target directory structure
           mkdir -p "./drivers/kernel"
+
+          # 5. Copy all files from the temporary folder straight into drivers/kernel
           cp -r "${{ github.workspace }}/ksu_next_tmp/"* "./drivers/kernel/"
 
-          # 4. Clone the SuSFS repository cleanly now that its old path is wiped
+          # 6. Clone the SuSFS repository to get the required driver files
           git clone https://gitlab.com/tiann/susfs4ksu.git "${{ github.workspace }}/susfs4ksu"
 
-          # 5. Integrate Kernel-SU Next into build config files
+          # 7. Integrate Kernel-SU Next into build config files
           sed -i $'232i source "drivers/kernel/Kconfig"\n' ./drivers/Kconfig
           echo 'obj-$(CONFIG_KSU) += kernel/' >> "./drivers/Makefile"
 
-          # 6. Copy the missing SuSFS driver files into your kernel tree
+          # 8. Copy the missing SuSFS driver files into your kernel tree
           cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/fs/susfs.c" ./fs/
           cp "${{ github.workspace }}/susfs4ksu/kernel_drivers/include/linux/susfs.h" ./include/linux/
 
-          # 7. Automatically force the correct Manual Hook & SuSFS config flags
+          # 9. Automatically force the correct Manual Hook & SuSFS config flags
           DEFCONFIG_PATH="./arch/arm64/configs/gale_defconfig"
           echo "CONFIG_KSU=y" >> $DEFCONFIG_PATH
           echo "CONFIG_KSU_SUSFS=y" >> $DEFCONFIG_PATH
