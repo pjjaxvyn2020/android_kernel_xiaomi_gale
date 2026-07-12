@@ -88,6 +88,11 @@ jobs:
 
           echo "Never gonna give you up never gonna let you down."
           
+      - name: Patch Kernel Syscall Hooks
+        run: |
+          # Ensure you are in your kernel root directory before running this
+          curl -LSs "https://raw.githubusercontent.com/JackA1ltman/NonGKI_Kernel_Build_2nd/mainline/Patches/syscall_hook_patches.sh" | bash  
+          
       - name: Build kernel
         run: |
           # Ensure correct environment vars in build_kernel.sh
