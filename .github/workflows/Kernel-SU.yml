@@ -70,14 +70,9 @@ jobs:
           cp "${{ github.workspace }}/susfs4ksu/kernel_patches/fs/susfs.c" ./fs/
           cp "${{ github.workspace }}/susfs4ksu/kernel_patches/include/linux/susfs.h" ./include/linux/
 
-          # 9. WIRE UP SUSFS: Tell the compiler to actually build the SuSFS driver files
+          # 9. WIRE UP SUSFS: Safely append to Kconfig using printf to protect YAML indentation
           echo 'obj-$(CONFIG_SUSFS) += susfs.o' >> ./fs/Makefile
-          cat << 'EOF' >> ./fs/Kconfig
-
-config SUSFS
-	bool "SuSFS support"
-	default y
-EOF
+          printf "\nconfig SUSFS\n\tbool \"SuSFS support\"\n\tdefault y\n" >> ./fs/Kconfig
 
           # 10. Automatically force the correct Manual Hook & SuSFS config flags
           DEFCONFIG_PATH="./arch/arm64/configs/gale_defconfig"
