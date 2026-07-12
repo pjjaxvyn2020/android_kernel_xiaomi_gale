@@ -53,7 +53,10 @@ jobs:
 
           # 3. Copy ONLY the inner 'kernel' subdirectory so Kconfig aligns perfectly at drivers/kernel/Kconfig
           cp -r "${{ github.workspace }}/ksu_next_tmp/kernel" "./drivers/kernel"
-
+          
+          # Add the missing include path to the KernelSU Kbuild
+          echo "ccflags-y += -I\$(srctree)/drivers/kernel" >> ./drivers/kernel/Kbuild
+          
           # 4. OVERRIDE STRICT CHECK: Delete the validation line that causes error 2 on pre-patched trees
           sed -i '/No hooks were defined/d' ./drivers/kernel/Kbuild
 
